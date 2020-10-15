@@ -1,4 +1,4 @@
 all:
-	g++ npshell.cpp -o  npshell
+	g++ -g  npshell.cpp -o  npshell
 rm:
-	rm main
+	rm npshell
