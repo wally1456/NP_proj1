@@ -66,11 +66,11 @@ void excute_cmd(vector<string> s_input,vector<vector<int>> &number_pipe,int cmd_
         if (s_input[i]=="|" || s_input[i]==">" || i == s_input.size()-1){
 
             if(i == s_input.size()-1 && (s_input[i][0]=='|' || s_input[i][0]=='!')){
+                if(s_input[i][0]=='!')
+                    ordinary_pipe = 1;
                 s_input[i].erase(0,1);
                 number = stoi(s_input[i].c_str());
                 is_number_pipe=1;
-                if(s_input[i][0]=='!')
-                    ordinary_pipe = 1;
             }
             else if(i == s_input.size()-1)
                 tmp_input.push_back(s_input[i]);      
@@ -97,16 +97,15 @@ void excute_cmd(vector<string> s_input,vector<vector<int>> &number_pipe,int cmd_
                     dup2(pipeline[pipe_count][1],STDOUT_FILENO);
                 else if(is_number_pipe){
                     int pipe_num;
-                    if (number_pipe[(cmd_count+number)%1000].empty()){
+                    if (number_pipe[(cmd_count+number)%1000].empty())
                         pipe_num = pipeline[pipe_count][1];
-                        dup2(pipeline[pipe_count][1],STDOUT_FILENO);  
+                    else
+                        pipe_num = number_pipe[(cmd_count+number)%1000][1];                          
+                    dup2(pipe_num,STDOUT_FILENO);
+                    if (ordinary_pipe){
+                        dup2(pipe_num,STDERR_FILENO);
                     }
-                    else{
-                        pipe_num = number_pipe[(cmd_count+number)%1000][1];
-                        dup2(number_pipe[(cmd_count+number)%1000][1],STDOUT_FILENO);                           
-                    }
-
-
+                        
                 }
                 if(s_input[i]==">"){
                     write_to_file((char*)(s_input[i+1].c_str()));    
@@ -181,6 +180,8 @@ int main(){
         cout << "%";
         getline(cin,input);
         split_input(input,s_input);
+        if (s_input[0]=="exit" || s_input[0]=="EOF")
+            break;
 
         if (s_input.size()<1)
             continue;
