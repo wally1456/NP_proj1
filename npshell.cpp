@@ -55,6 +55,7 @@ void excute_cmd(vector<string> s_input,vector<vector<int>> &number_pipe,int cmd_
     vector<pid_t> pidTable;
     bool is_number_pipe = 0;
     bool have_number_pipe = 0;
+    bool ordinary_pipe = 0;
     int number;
 
     if (!number_pipe[cmd_count%1000].empty()){
@@ -64,10 +65,12 @@ void excute_cmd(vector<string> s_input,vector<vector<int>> &number_pipe,int cmd_
     while(i<s_input.size()){
         if (s_input[i]=="|" || s_input[i]==">" || i == s_input.size()-1){
 
-            if(i == s_input.size()-1 && s_input[i][0]=='|'){
+            if(i == s_input.size()-1 && (s_input[i][0]=='|' || s_input[i][0]=='!')){
                 s_input[i].erase(0,1);
                 number = stoi(s_input[i].c_str());
                 is_number_pipe=1;
+                if(s_input[i][0]=='!')
+                    ordinary_pipe = 1;
             }
             else if(i == s_input.size()-1)
                 tmp_input.push_back(s_input[i]);      
@@ -86,16 +89,25 @@ void excute_cmd(vector<string> s_input,vector<vector<int>> &number_pipe,int cmd_
                 if (pipe_count != 0)
                     dup2(pipeline[pipe_count-1][0],STDIN_FILENO); 
                 else if (have_number_pipe){
-                    cerr << number_pipe[cmd_count%1000].size() << endl;
-                    while(!number_pipe[cmd_count%1000].empty()){
-                        int fd = number_pipe[cmd_count%1000].back();
-                        dup2(fd,STDIN_FILENO);
-                        close(fd);
-                        number_pipe[cmd_count%1000].pop_back();
-                    }
+                    dup2(number_pipe[cmd_count%1000][0],STDIN_FILENO);
+                    close(number_pipe[cmd_count%1000][0]);
+                    close(number_pipe[cmd_count%1000][1]);
                 }
-                if (i != s_input.size()-1 || is_number_pipe)
+                if (i != s_input.size()-1 )
                     dup2(pipeline[pipe_count][1],STDOUT_FILENO);
+                else if(is_number_pipe){
+                    int pipe_num;
+                    if (number_pipe[(cmd_count+number)%1000].empty()){
+                        pipe_num = pipeline[pipe_count][1];
+                        dup2(pipeline[pipe_count][1],STDOUT_FILENO);  
+                    }
+                    else{
+                        pipe_num = number_pipe[(cmd_count+number)%1000][1];
+                        dup2(number_pipe[(cmd_count+number)%1000][1],STDOUT_FILENO);                           
+                    }
+
+
+                }
                 if(s_input[i]==">"){
                     write_to_file((char*)(s_input[i+1].c_str()));    
                 }                                      
@@ -123,15 +135,19 @@ void excute_cmd(vector<string> s_input,vector<vector<int>> &number_pipe,int cmd_
                         close(pipeline[pipe_count][0]);
                         close(pipeline[pipe_count][1]);
                     }
-                    else{
-                        //cerr << "is_number_pipe  " << cmd_count+number << " push " << pipeline[pipe_count][0] << endl;
-                        number_pipe[(cmd_count+number)%1000].push_back(pipeline[pipe_count][0]);
-                        close(pipeline[pipe_count][1]);
-                        //cerr << (cmd_count+number)%1000 <<"\t"<< number_pipe[(cmd_count+number)%1000].size()<<endl;
+                    else{                    
+                        if (number_pipe[(cmd_count+number)%1000].empty()){
+                            number_pipe[(cmd_count+number)%1000].push_back(pipeline[pipe_count][0]);
+                            number_pipe[(cmd_count+number)%1000].push_back(pipeline[pipe_count][1]);  
+                        }
+                        else{
+                            close(pipeline[pipe_count][0]);
+                            close(pipeline[pipe_count][1]);                            
+                        }    
+    
                     }
                 }
                 if(have_number_pipe){
-                        cerr << "in_number_pipe" << endl;
                     while(!number_pipe[cmd_count%1000].empty()){
                         int fd = number_pipe[cmd_count%1000].back();
                         close(fd);
