@@ -6,7 +6,6 @@
 #include<vector>
 #include<wait.h>
 #include<fcntl.h>
-
 using namespace std;
 
 void split_input(string str,vector<string> &tuple){
@@ -18,18 +17,14 @@ void split_input(string str,vector<string> &tuple){
 		p = strtok(NULL, " ");
 	}
 }
-
 void write_to_file(char *filename){
     int fd;
     mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
     fd = creat(filename, mode);
-
-    if (fd == -1){
+    if (fd == -1)
         cerr << "create file error.\n";
-    }
     dup2(fd,STDOUT_FILENO);
 }
-
 void close_pipe(int pipeline[][2],int pipe_count){
     if (pipe_count != 0){
     close(pipeline[pipe_count-1][0]);
@@ -38,14 +33,12 @@ void close_pipe(int pipeline[][2],int pipe_count){
     close(pipeline[pipe_count][0]);
     close(pipeline[pipe_count][1]);
 }
-
 void childHandler(int signo){ 
     int status; 
     while (waitpid(-1, &status, WNOHANG) > 0) { 
             //do nothing 
         } 
     }
-
 void excute_cmd(vector<string> s_input,vector<vector<int>> &number_pipe,int cmd_count){
     signal(SIGCHLD, childHandler);
     int i = 0;
@@ -61,10 +54,8 @@ void excute_cmd(vector<string> s_input,vector<vector<int>> &number_pipe,int cmd_
     if (!number_pipe[cmd_count%1000].empty()){
         have_number_pipe = 1;
     }
-
     while(i<s_input.size()){
         if (s_input[i]=="|" || s_input[i]==">" || i == s_input.size()-1){
-
             if(i == s_input.size()-1 && (s_input[i][0]=='|' || s_input[i][0]=='!')){
                 if(s_input[i][0]=='!')
                     ordinary_pipe = 1;
@@ -102,10 +93,8 @@ void excute_cmd(vector<string> s_input,vector<vector<int>> &number_pipe,int cmd_
                     else
                         pipe_num = number_pipe[(cmd_count+number)%1000][1];                          
                     dup2(pipe_num,STDOUT_FILENO);
-                    if (ordinary_pipe){
-                        dup2(pipe_num,STDERR_FILENO);
-                    }
-                        
+                    if (ordinary_pipe)
+                        dup2(pipe_num,STDERR_FILENO);    
                 }
                 if(s_input[i]==">"){
                     write_to_file((char*)(s_input[i+1].c_str()));    
@@ -143,7 +132,6 @@ void excute_cmd(vector<string> s_input,vector<vector<int>> &number_pipe,int cmd_
                             close(pipeline[pipe_count][0]);
                             close(pipeline[pipe_count][1]);                            
                         }    
-    
                     }
                 }
                 if(have_number_pipe){
@@ -159,8 +147,7 @@ void excute_cmd(vector<string> s_input,vector<vector<int>> &number_pipe,int cmd_
         else{
             tmp_input.push_back(s_input[i]);  
         } 
-        i++;          
-        
+        i++;                 
     }
     for(int i=0;i<pidTable.size();i++){
         int status;
@@ -172,22 +159,19 @@ int main(){
     string input;
     //setenv("PATH","./,bin/",1);
     setenv("PATH","bin",1);
-    //cout << "PATH=" << getenv("PATH")<<endl;
     vector<vector<int>> number_pipe(1000);
     int cmd_count = 0;
     while(1){
         vector<string> s_input;        
-        cout << "%";
+        cout << "% ";
         getline(cin,input);
         split_input(input,s_input);
         if (s_input[0]=="exit" || s_input[0]=="EOF")
             break;
-
         if (s_input.size()<1)
             continue;
         else
             cmd_count += 1;
-        
         if (s_input[0]=="printenv"){
             cerr << getenv(s_input[1].c_str()) << endl;
             continue;
