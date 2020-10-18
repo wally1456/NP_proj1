@@ -150,8 +150,8 @@ void excute_cmd(vector<string> s_input,vector<vector<int>> &number_pipe,int cmd_
         i++;                 
     }
     for(int i=0;i<pidTable.size();i++){
-        if(is_number_pipe && (i==pidTable.size()-1))
-            continue;
+        /*if(is_number_pipe && (i==pidTable.size()-1))
+            continue;*/
         int status;
         waitpid(pidTable[i],&status,0);  
     }
@@ -168,10 +168,11 @@ int main(){
         cout << "% ";
         getline(cin,input);
         split_input(input,s_input);
+        if (s_input.size()<1)
+            continue;        
         if (s_input[0]=="exit" || s_input[0]=="EOF")
             break;
-        if (s_input.size()<1)
-            continue;
+
         else
             cmd_count += 1;
         if (s_input[0]=="printenv"){
