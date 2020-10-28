@@ -150,8 +150,8 @@ void excute_cmd(vector<string> s_input,vector<vector<int>> &number_pipe,int cmd_
         i++;                 
     }
     for(int i=0;i<pidTable.size();i++){
-        /*if(is_number_pipe && (i==pidTable.size()-1))
-            continue;*/
+        if(is_number_pipe && (i==pidTable.size()-1))
+            continue;
         int status;
         waitpid(pidTable[i],&status,0);  
     }
